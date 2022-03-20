@@ -10,7 +10,7 @@ profile:
   address: >
     
     <p> Checkpoint Building, room 261 </p>
-    <p>Tel Aviv University, Tel Aviv, Israel, Earth, Milky Way</p>
+    <p>Tel Aviv University, Tel Aviv, Israel, Earth, Milky Way.</p>
     
 news: false  # includes a list of news items
 selected_papers: yes # includes a list of papers marked as "selected={true}"
