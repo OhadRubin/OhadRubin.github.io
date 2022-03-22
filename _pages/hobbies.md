@@ -4,18 +4,19 @@ title: hobbies
 permalink: /hobbies/
 nav: true
 ---
-
-## Research Hobbies
 **March 2022**
 
+## Research Hobbies
+
 a.k.a "things I'm interested in, but not actively researching" include:
-- HyperNetworks.
-- VQVAEs.
-- Meta-learning optimizers.
-- Sparse experts models (and sparse models in general).
-- Multi-Modal models.
-- Computational humor.
-- Hebrew NLP.
+- HyperNetworks
+- VQVAEs
+- Meta-learning optimizers
+- Sparse experts models (and sparse models in general)
+- Multi-Modal models
+- Computational humor
+- Hebrew NLP
+- Semantic Parsing
 
 
 ## Other Hobbies
