@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerJS Messaging Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .connection-panel,
+        .message-panel {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        
+        .message-container {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        
+        .message {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .sent {
+            background-color: #e3f2fd;
+            text-align: right;
+        }
+        
+        .received {
+            background-color: #f1f1f1;
+        }
+        
+        input,
+        button {
+            padding: 8px;
+            margin: 5px 0;
+        }
+        
+        button {
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .input-group input {
+            flex-grow: 1;
+        }
+        
+        .status {
+            color: #666;
+            font-style: italic;
+            margin-top: 10px;
+        }
+        
+        .my-id {
+            font-weight: bold;
+            color: #2196F3;
+        }
+        
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>PeerJS Messaging Demo</h1>
+
+        <div class="connection-panel">
+            <h2>Connection Setup</h2>
+            <div>
+                <p>Your ID: <span id="my-id" class="my-id">Generating...</span>
+                    <button id="copy-id">Copy ID</button>
+                </p>
+                <div class="status" id="conn-status">Initializing connection...</div>
+            </div>
+            <div class="input-group">
+                <input type="text" id="peer-id" placeholder="Enter peer ID to connect">
+                <button id="connect-btn">Connect</button>
+            </div>
+        </div>
+
+        <div class="message-panel">
+            <h2>Messages</h2>
+            <div class="message-container" id="messages"></div>
+            <div class="input-group">
+                <input type="text" id="message-input" placeholder="Type your message" disabled>
+                <button id="send-btn" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // UI Elements
+            const myIdElement = document.getElementById('my-id');
+            const connStatusElement = document.getElementById('conn-status');
+            const peerIdInput = document.getElementById('peer-id');
+            const connectBtn = document.getElementById('connect-btn');
+            const messageInput = document.getElementById('message-input');
+            const sendBtn = document.getElementById('send-btn');
+            const messagesContainer = document.getElementById('messages');
+            const copyIdBtn = document.getElementById('copy-id');
+
+            // Variables
+            let peer = null;
+            let conn = null;
+            let myId = '';
+
+            // Initialize PeerJS
+            function initPeerJS() {
+                try {
+                    peer = new Peer();
+
+                    peer.on('open', (id) => {
+                        myId = id;
+                        myIdElement.textContent = id;
+                        connStatusElement.textContent = 'Ready to connect. Share your ID with someone or connect to another peer.';
+                    });
+
+                    peer.on('connection', (connection) => {
+                        handleConnection(connection);
+                    });
+
+                    peer.on('error', (err) => {
+                        console.error('PeerJS error:', err);
+                        connStatusElement.textContent = `Error: ${err.type}`;
+                        connStatusElement.classList.add('error');
+                    });
+                } catch (error) {
+                    console.error('Failed to initialize PeerJS:', error);
+                    connStatusElement.textContent = `Failed to initialize: ${error.message}`;
+                    connStatusElement.classList.add('error');
+                }
+            }
+
+            // Handle incoming/outgoing connection
+            function handleConnection(connection) {
+                conn = connection;
+
+                connStatusElement.textContent = `Connected to: ${conn.peer}`;
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+
+                conn.on('data', (data) => {
+                    displayMessage(data, 'received');
+                });
+
+                conn.on('close', () => {
+                    connStatusElement.textContent = 'Connection closed';
+                    messageInput.disabled = true;
+                    sendBtn.disabled = true;
+                    conn = null;
+                });
+
+                conn.on('error', (err) => {
+                    console.error('Connection error:', err);
+                    connStatusElement.textContent = `Connection error: ${err}`;
+                    connStatusElement.classList.add('error');
+                });
+            }
+
+            // Display message in the UI
+            function displayMessage(message, type) {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('message', type);
+                messageElement.textContent = type === 'sent' ? `You: ${message}` : `Peer: ${message}`;
+                messagesContainer.appendChild(messageElement);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            // Send message
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (message && conn && conn.open) {
+                    conn.send(message);
+                    displayMessage(message, 'sent');
+                    messageInput.value = '';
+                }
+            }
+
+            // Event Listeners
+            connectBtn.addEventListener('click', () => {
+                const peerId = peerIdInput.value.trim();
+                if (peerId && peer) {
+                    connStatusElement.textContent = `Connecting to ${peerId}...`;
+                    const connection = peer.connect(peerId);
+                    connection.on('open', () => {
+                        handleConnection(connection);
+                    });
+                }
+            });
+
+            sendBtn.addEventListener('click', sendMessage);
+
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            copyIdBtn.addEventListener('click', () => {
+                if (myId) {
+                    navigator.clipboard.writeText(myId)
+                        .then(() => {
+                            copyIdBtn.textContent = 'Copied!';
+                            setTimeout(() => {
+                                copyIdBtn.textContent = 'Copy ID';
+                            }, 2000);
+                        })
+                        .catch(err => {
+                            console.error('Failed to copy ID:', err);
+                        });
+                }
+            });
+
+            // Initialize
+            initPeerJS();
+        });
+    </script>
+</body>
+
+</html>
