@@ -1,4 +1,10 @@
 source 'https://rubygems.org'
+
+ruby '~> 3.1.0'
+
+# Explicitly add URI gem compatibility
+gem 'uri', '~> 0.10.1', require: false if RUBY_VERSION >= '3.1.0'
+
 group :jekyll_plugins do
     gem 'jekyll'
     gem 'jekyll-archives'
